@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { celebrate } = require('celebrate');
-const auth = require('../middlewares/auth');
+const { auth } = require('../middlewares/auth');
 const userRouter = require('./users');
 const movieRouter = require('./movie');
 
@@ -13,11 +13,8 @@ router.post('/signin', celebrate(signInValidation), login);
 
 router.use(auth);
 
-router.use('/', userRouter);
-router.use('/', movieRouter);
-
-router.use('*', (req, res, next) => {
-  next(new NotFoundError('Страница не найдена'));
-});
+router.use('/users', userRouter);
+router.use('/movie', movieRouter);
+router.use('*', () => { throw new NotFoundError('Страница не найдена'); });
 
 module.exports = router;
