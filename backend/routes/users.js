@@ -4,7 +4,7 @@ const { celebrate } = require('celebrate');
 const {
   createUser, currentUser, updateUser,
 } = require('../controllers/users');
-const { getUserByIdValidation, updateUserProfileValidation } = require('../../utils/validations/userJoi');
+const { getUserByIdValidation, updateUserProfileValidation } = require('../utils/validations/userJoi');
 
 userRouter.post('/users', createUser);
 userRouter.get('/users/me', celebrate(getUserByIdValidation), currentUser);
