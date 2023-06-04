@@ -3,6 +3,6 @@ diplom on YA-Praktikum
 
 ## Ссылки на проект
 
-Frontend : ariun-movies.nomoredomains.rocks / created
+Frontend : https://ariun-movies.nomoredomains.rocks / dont created
 
-Backend: api.ariun-movies.nomoredomains.rocks
+Backend: https://api.ariun-movies.nomoredomains.rocks
