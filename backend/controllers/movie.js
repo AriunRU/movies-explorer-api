@@ -1,7 +1,7 @@
 const Movie = require('../models/movies');
-const BadRequestError = require('../../utils/customError/BadRequestError');
-const NotFoundError = require('../../utils/customError/NotFoundError');
-const ForbiddenError = require('../../utils/customError/ForbiddenError');
+const BadRequestError = require('../utils/customError/BadRequestError');
+const NotFoundError = require('../utils/customError/NotFoundError');
+const ForbiddenError = require('../utils/customError/ForbiddenError');
 
 const getMyMovies = (req, res, next) => {
   const idUser = req.user._id;

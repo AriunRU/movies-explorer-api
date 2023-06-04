@@ -1,5 +1,5 @@
 const { Joi } = require('celebrate');
-const { REGEX } = require('../../backend/constants/constants');
+const { REGEX } = require('../../constants/constants');
 
 const createMovieValidation = {
   body: Joi.object().keys({

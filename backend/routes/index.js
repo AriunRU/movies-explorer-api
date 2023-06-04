@@ -5,8 +5,8 @@ const userRouter = require('./users');
 const movieRouter = require('./movie');
 
 const { login, createUser } = require('../controllers/users');
-const { signUpValidation, signInValidation } = require('../../utils/validations/userJoi');
-const NotFoundError = require('../../utils/customError/NotFoundError');
+const { signUpValidation, signInValidation } = require('../utils/validations/userJoi');
+const NotFoundError = require('../utils/customError/NotFoundError');
 
 router.post('/signup', celebrate(signUpValidation), createUser);
 router.post('/signin', celebrate(signInValidation), login);

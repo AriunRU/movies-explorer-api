@@ -1,6 +1,8 @@
 const allowedCors = [
-  'https://ariun.nomoredomains.monster',
-  'http://ariun.nomoredomains.monster',
+  'https://ariun-movies.nomoredomains.rocks',
+  'http://ariun-movies.nomoredomains.rocks',
+  'https://api.ariun-movies.nomoredomains.rocks',
+  'http://api.ariun-movies.nomoredomains.rocks',
   'http://localhost:3000',
   'http://localhost:3001',
 ];
