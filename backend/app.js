@@ -4,7 +4,6 @@ const { errors } = require('celebrate');
 const cors = require('./middlewares/cors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const router = require('./routes');
-const { handleError } = require('./utils/index');
 
 const { PORT = 3001 } = process.env;
 const app = express();
@@ -21,7 +20,6 @@ app.use(router);
 
 app.use(errorLogger);
 app.use(errors());
-app.use(handleError);
 
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
