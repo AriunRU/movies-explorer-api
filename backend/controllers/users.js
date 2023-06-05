@@ -2,10 +2,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const User = require('../models/users');
-const BadRequestError = require('../utils/customError/BadRequestError');
-const NotFoundError = require('../utils/customError/NotFoundError');
-const ConflictError = require('../utils/customError/ConflictError');
-const UnauthorizedError = require('../utils/customError/UnauthorizedError');
+const {
+  BadRequest, ConflictError, NotFound, Unauthorized,
+} = require('../errors/allErrors');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
@@ -23,7 +22,7 @@ const createUser = (req, res, next) => {
       if (err.code === 11000) {
         next(new ConflictError('Пользователь с данной почтой уже зарегистрирован'));
       } else if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Некорректные данные при обновлении пользователя'));
+        return next(new BadRequest('Некорректные данные при обновлении пользователя'));
       } return next(err);
     });
 };
@@ -33,12 +32,12 @@ const login = (req, res, next) => {
   User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        throw new UnauthorizedError('Неверный email или пароль');
+        throw new Unauthorized('Неверный email или пароль');
       }
       return bcrypt.compare(password, user.password)
         .then((isEqual) => {
           if (!isEqual) {
-            throw new UnauthorizedError('Неверный email или пароль');
+            throw new Unauthorized('Неверный email или пароль');
           }
           const token = jwt.sign(
             { _id: user._id },
@@ -57,7 +56,7 @@ const currentUser = (req, res, next) => {
       if (user) {
         return res.status(200).send(user);
       }
-      throw new NotFoundError('Пользователь не найден');
+      throw new NotFound('Пользователь по _id не найден');
     })
     .catch((err) => { next(err); });
 };
@@ -68,13 +67,13 @@ const updateUser = (req, res, next) => {
   User.findByIdAndUpdate(id, { name, email }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        return next(new NotFoundError('Пользователь не найден'));
+        return next(new NotFound('Пользователь не найден'));
       }
       return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Некорректные данные при обновлении пользователя'));
+        return next(new BadRequest('Некорректные данные при обновлении пользователя'));
       } return next(err);
     });
 };
