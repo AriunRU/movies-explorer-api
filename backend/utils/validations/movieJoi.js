@@ -1,7 +1,7 @@
-const { Joi } = require('celebrate');
+const { celebrate, Joi } = require('celebrate');
 const { REGEX } = require('../../constants/constants');
 
-const createMovieValidation = {
+const createMovieValidation = celebrate({
   body: Joi.object().keys({
     country: Joi.string().required(),
     director: Joi.string().required(),
@@ -15,13 +15,13 @@ const createMovieValidation = {
     nameRU: Joi.string().required(),
     nameEN: Joi.string().required(),
   }),
-};
+});
 
-const deleteMovieValidation = {
+const deleteMovieValidation = celebrate({
   params: Joi.object().keys({
     movieId: Joi.string().required().hex().length(24),
   }),
-};
+});
 
 module.exports = {
   createMovieValidation,

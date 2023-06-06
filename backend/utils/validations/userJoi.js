@@ -1,36 +1,36 @@
-const { Joi } = require('celebrate');
+const { celebrate, Joi } = require('celebrate');
 
-const signUpValidation = {
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
+const userRegisterValidation = celebrate({
+  body: Joi.object({
     name: Joi.string().min(2).max(30),
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
   }),
-};
+});
 
-const signInValidation = {
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
+const userLoginValidation = celebrate({
+  body: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
   }),
-};
+});
 
-const getUserByIdValidation = {
-  params: Joi.object().keys({
-    userId: Joi.string().length(24).hex().required(),
+const userInfoValidation = celebrate({
+  body: Joi.object({
+    name: Joi.string().min(2).max(30).required(),
+    email: Joi.string().email().required(),
   }),
-};
+});
 
-const updateUserProfileValidation = {
-  body: Joi.object().keys({
-    name: Joi.string().required().min(2).max(30),
-    email: Joi.string().required().email(),
+const userIdValidation = celebrate({
+  params: Joi.object({
+    id: Joi.string().hex().length(24),
   }),
-};
+});
 
 module.exports = {
-  signUpValidation,
-  signInValidation,
-  getUserByIdValidation,
-  updateUserProfileValidation,
+  userRegisterValidation,
+  userLoginValidation,
+  userInfoValidation,
+  userIdValidation,
 };

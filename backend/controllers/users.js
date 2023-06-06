@@ -1,84 +1,99 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-
+const { generateToken } = require('../utils/token');
 const User = require('../models/users');
-const BadRequestError = require('../utils/customError/BadRequestError');
+const { CREATED_201 } = require('../constants/constants');
 const NotFoundError = require('../utils/customError/NotFoundError');
-const ConflictError = require('../utils/customError/ConflictError');
-const UnauthorizedError = require('../utils/customError/UnauthorizedError');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
-
-const createUser = (req, res, next) => {
-  const { name, email, password } = req.body;
-  bcrypt.hash(password, 10)
-    .then((hash) => User.create({ name, email, password: hash }))
-    .then((newUser) => {
-      res.status(200).send({
-        name: newUser.name,
-        email: newUser.email,
-      });
-    })
-    .catch((err) => {
-      if (err.code === 11000) {
-        next(new ConflictError('Пользователь с данной почтой уже зарегистрирован'));
-      } else if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Некорректные данные при обновлении пользователя'));
-      } return next(err);
-    });
-};
-
-const login = (req, res, next) => {
+async function login(req, res, next) {
   const { email, password } = req.body;
-  User.findOne({ email }).select('+password')
-    .then((user) => {
-      if (!user) {
-        throw new UnauthorizedError('Неверный email или пароль');
-      }
-      return bcrypt.compare(password, user.password)
-        .then((isEqual) => {
-          if (!isEqual) {
-            throw new UnauthorizedError('Неверный email или пароль');
-          }
-          const token = jwt.sign(
-            { _id: user._id },
-            NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-            { expiresIn: '7d' },
-          );
-          res.status(200).send({ token });
-        });
-    })
-    .catch(next);
-};
+  try {
+    const user = await User.findUserByCredentials(email, password);
+    const payload = { _id: user._id };
+    const token = generateToken(payload);
+    res
+      .cookie('jwt', token, { maxAge: (3600000 * 24 * 7), httpOnly: true, sameSite: true })
+      .send({ message: 'Авторизация прошла успешно' });
+  } catch (err) {
+    next(err);
+  }
+}
 
-const currentUser = (req, res, next) => {
-  User.findById(req.user._id)
-    .then((user) => {
-      if (user) {
-        return res.status(200).send(user);
-      }
-      throw new NotFoundError('Пользователь не найден');
-    })
-    .catch((err) => { next(err); });
-};
+async function getAllUsers(_, res, next) {
+  try {
+    const users = await User.find({});
+    if (users.length === 0) {
+      throw new NotFoundError('Пользователей нет');
+    }
+    res.send({ users });
+  } catch (err) {
+    next(err);
+  }
+}
 
-const updateUser = (req, res, next) => {
-  const id = req.user._id;
-  const { name, email } = req.body;
-  User.findByIdAndUpdate(id, { name, email }, { new: true, runValidators: true })
-    .then((user) => {
-      if (!user) {
-        return next(new NotFoundError('Пользователь не найден'));
-      }
-      return res.send(user);
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Некорректные данные при обновлении пользователя'));
-      } return next(err);
+async function getUser(req, res, next) {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      throw new NotFoundError('Пользователя с данным id не найдено');
+    }
+
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getMe(req, res, next) {
+  const { _id } = req.user;
+  try {
+    const user = await User.findById(_id);
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function createUser(req, res, next) {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name, about, avatar, email, password: hash,
     });
-};
+
+    res.status(CREATED_201).send(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateUser(req, res, next) {
+  const { _id } = req.user;
+  try {
+    const user = await User.findByIdAndUpdate(
+      _id,
+      req.body,
+      { new: true, runValidators: true },
+    );
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+function clearCookie(req, res, next) {
+  try {
+    res.clearCookie('jwt').send({ message: 'Cookie clear' });
+  } catch (err) {
+    next(err);
+  }
+}
 
 module.exports = {
-  createUser, currentUser, login, updateUser,
+  createUser, login, updateUser, clearCookie, getMe, getUser, getAllUsers,
 };
