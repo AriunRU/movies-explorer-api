@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const isURL = require('validator/lib/isURL');
+const { REGEX } = require('../constants/constants');
 
 const movieSchema = new mongoose.Schema({
   country: {
@@ -26,24 +26,27 @@ const movieSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validator: (v) => isURL(v),
-      message: 'Неверный формат ссылки',
+      validator(values) {
+        return REGEX.test(values);
+      },
     },
   },
   trailerLink: {
     type: String,
     required: true,
     validate: {
-      validator: (v) => isURL(v),
-      message: 'Неверный формат ссылки',
+      validator(values) {
+        return REGEX.test(values);
+      },
     },
   },
   thumbnail: {
     type: String,
     required: true,
     validate: {
-      validator: (v) => isURL(v),
-      message: 'Неверный формат ссылки',
+      validator(values) {
+        return REGEX.test(values);
+      },
     },
   },
   owner: {
