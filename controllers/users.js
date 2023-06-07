@@ -17,18 +17,17 @@ module.exports.createUser = (req, res, next) => {
       email: user.email,
       _id: user._id,
     }))
-    .catch(() => {
-      next(req);
-      /* if (err.code === 11000) {
+    .catch((err) => {
+      if (err.code === 11000) {
         const conflictErr = new ConflictError();
         next(conflictErr);
       } else if (err instanceof mongoose.Error.ValidationError) {
         const validationError = new BadRequestError();
-        validationError.message = req;
+        validationError.message = err.message;
         next(validationError);
       } else {
         next(err);
-      } */
+      }
     }));
 };
 
