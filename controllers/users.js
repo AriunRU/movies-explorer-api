@@ -23,7 +23,7 @@ module.exports.createUser = (req, res, next) => {
         next(conflictErr);
       } else if (err instanceof mongoose.Error.ValidationError) {
         const validationError = new BadRequestError();
-        validationError.message = err.message;
+        validationError.message = req;
         next(validationError);
       } else {
         next(err);
