@@ -1,17 +1,18 @@
+const mongoose = require('mongoose');
+
+const { ERR_MESSAGE_CONFLICT_MOVIE_ID } = require('../utils/constants');
+
 const Movie = require('../models/movies');
-const BadRequestError = require('../utils/customError/BadRequestError');
-const NotFoundError = require('../utils/customError/NotFoundError');
-const ForbiddenError = require('../utils/customError/ForbiddenError');
+const NotFoundError = require('../customError/NotFoundError');
+const BadRequestError = require('../customError/BadRequestError');
+const ForbiddenError = require('../customError/ForbiddenError');
+const ConflictError = require('../customError/ConflictError');
 
-const getMyMovies = (req, res, next) => {
-  const idUser = req.user._id;
-  Movie.find({ owner: idUser })
-    .then((allMovies) => res.send(allMovies))
-    .catch(next);
-};
+module.exports.getMovies = (req, res, next) => Movie.find({ owner: req.user._id })
+  .then((movies) => res.send(movies))
+  .catch(next);
 
-const postMovie = (req, res, next) => {
-  const idUser = req.user._id;
+module.exports.createMovie = (req, res, next) => {
   const {
     country,
     director,
@@ -20,62 +21,63 @@ const postMovie = (req, res, next) => {
     description,
     image,
     trailerLink,
-    nameRU,
-    nameEN,
     thumbnail,
     movieId,
+    nameRU,
+    nameEN,
   } = req.body;
 
-  Movie.create({
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    nameRU,
-    nameEN,
-    thumbnail,
-    movieId,
-    owner: idUser,
-  })
-    .then((newMovie) => res.status(200).send(newMovie))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Некорректные данные при сохранении фильма'));
-      }
-      return next(err);
-    });
-};
-
-const deleteMovie = (req, res, next) => {
-  const idUser = req.user._id;
-  Movie.findById(req.params.movieId)
+  Movie.find({ owner: req.user._id, movieId })
     .then((movie) => {
-      if (!movie) {
-        next(new NotFoundError('По указанному id фильм не найден'));
-        return;
-      }
-      if (movie.owner.toString() === idUser) {
-        Movie.deleteOne(movie._id)
-          .then(() => {
-            res.send({ message: 'Фильм удален' });
-          }).catch((err) => {
-            next(err);
+      if (movie.length === 0) {
+        Movie.create({
+          country,
+          director,
+          duration,
+          year,
+          description,
+          image,
+          trailerLink,
+          thumbnail,
+          owner: req.user._id,
+          movieId,
+          nameRU,
+          nameEN,
+        })
+          .then((createdMovie) => {
+            res.send(createdMovie);
+          })
+          .catch((err) => {
+            if (err instanceof mongoose.Error.ValidationError) {
+              const validationError = new BadRequestError();
+              validationError.message = err.message;
+              next(validationError);
+            } else {
+              next(err);
+            }
           });
       } else {
-        next(new ForbiddenError('У Вас нет прав на удаление данного фильма'));
+        const conflictMovieErr = new ConflictError();
+        conflictMovieErr.message = ERR_MESSAGE_CONFLICT_MOVIE_ID;
+        next(conflictMovieErr);
       }
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError('Переданы некорректные данные'));
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
-module.exports = {
-  getMyMovies, postMovie, deleteMovie,
+module.exports.deleteMovie = (req, res, next) => {
+  const { _id } = req.params;
+
+  return Movie.findById(_id)
+    .orFail(() => {
+      throw new NotFoundError();
+    })
+    .then((movie) => {
+      if (movie.owner._id.toString() === req.user._id) {
+        return movie.deleteOne();
+      }
+      throw new ForbiddenError();
+    })
+    .then((movie) => res.send(movie))
+    .catch(next);
 };

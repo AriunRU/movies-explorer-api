@@ -1,26 +1,26 @@
 const router = require('express').Router();
+const NotFoundError = require('../customError/NotFoundError');
+const { ERR_MESSAGE_WRONG_PAGE } = require('../utils/constants');
+
+const usersRoutes = require('./users');
+const moviesRoutes = require('./movie');
+
+const { validateSignInData, validateSignUpData } = require('../utils/validation');
+const { createUser, login, logout } = require('../controllers/users');
 const { auth } = require('../middlewares/auth');
-const userRouter = require('./users');
-const movieRouter = require('./movie');
 
-const { login, createUser, clearCookie } = require('../controllers/users');
-const { userRegisterValidation, userLoginValidation } = require('../utils/validations/userJoi');
-const NotFoundError = require('../utils/customError/NotFoundError');
+router.post('/signin', validateSignInData, login);
+router.post('/signup', validateSignUpData, createUser);
 
-router.get('/crash-test', () => {
-  setTimeout(() => {
-    throw new Error('Сервер сейчас упадёт');
-  }, 0);
+router.use('/users', auth, usersRoutes);
+router.use('/movies', auth, moviesRoutes);
+
+router.post('/signout', auth, logout);
+
+router.use('*', auth, (req, res, next) => {
+  const err = new NotFoundError();
+  err.message = ERR_MESSAGE_WRONG_PAGE;
+  next(err);
 });
-
-router.post('/signup', userRegisterValidation, createUser);
-router.post('/signin', userLoginValidation, login);
-
-router.use(auth);
-
-router.post('/signout', clearCookie);
-router.use('/users', userRouter);
-router.use('/movie', movieRouter);
-router.use('*', () => { throw new NotFoundError('Страница не найдена'); });
 
 module.exports = router;

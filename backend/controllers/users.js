@@ -1,99 +1,104 @@
+const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const { generateToken } = require('../utils/token');
+const jsonwebtoken = require('jsonwebtoken');
+
 const User = require('../models/users');
-const { CREATED_201 } = require('../constants/constants');
-const NotFoundError = require('../utils/customError/NotFoundError');
+const UnauthorizedError = require('../customError/UnauthorizedError');
+const NotFoundError = require('../customError/NotFoundError');
+const BadRequestError = require('../customError/BadRequestError');
+const ConflictError = require('../customError/ConflictError');
+const { JWT_SECRET } = require('../config');
+const { MESSAGE_SUCCESS_AUTH } = require('../utils/constants');
 
-async function login(req, res, next) {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  try {
-    const user = await User.findUserByCredentials(email, password);
-    const payload = { _id: user._id };
-    const token = generateToken(payload);
-    res
-      .cookie('jwt', token, { maxAge: (3600000 * 24 * 7), httpOnly: true, sameSite: true })
-      .send({ message: 'Авторизация прошла успешно' });
-  } catch (err) {
-    next(err);
-  }
-}
 
-async function getAllUsers(_, res, next) {
-  try {
-    const users = await User.find({});
-    if (users.length === 0) {
-      throw new NotFoundError('Пользователей нет');
-    }
-    res.send({ users });
-  } catch (err) {
-    next(err);
-  }
-}
+  User
+    .findOne({ email }).select('+password')
+    .orFail(() => {
+      throw new UnauthorizedError();
+    })
+    .then((user) => bcrypt.compare(password, user.password).then((matched) => {
+      if (matched) {
+        return user;
+      }
+      throw new UnauthorizedError();
+    }))
+    .then((user) => {
+      const jwt = jsonwebtoken.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-async function getUser(req, res, next) {
-  const { id } = req.params;
+      res.cookie('jwt', jwt, {
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+        sameSite: true,
+      }).send({ message: MESSAGE_SUCCESS_AUTH }).end();
+    })
+    .catch(next);
+};
 
-  try {
-    const user = await User.findById(id);
-    if (!user) {
-      throw new NotFoundError('Пользователя с данным id не найдено');
-    }
+module.exports.createUser = (req, res, next) => {
+  const { password } = req.body;
+  return bcrypt.hash(password, 10).then((hash) => User.create({
+    ...req.body, password: hash,
+  })
+    .then((user) => res.send({
+      name: user.name,
+      email: user.email,
+      _id: user._id,
+    }))
+    .catch((err) => {
+      if (err.code === 11000) {
+        const conflictErr = new ConflictError();
+        next(conflictErr);
+      } else if (err instanceof mongoose.Error.ValidationError) {
+        const validationError = new BadRequestError();
+        validationError.message = err.message;
+        next(validationError);
+      } else {
+        next(err);
+      }
+    }));
+};
 
-    res.send(user);
-  } catch (err) {
-    next(err);
-  }
-}
+module.exports.getUser = (req, res, next) => {
+  const id = req.user._id;
 
-async function getMe(req, res, next) {
-  const { _id } = req.user;
-  try {
-    const user = await User.findById(_id);
-    res.send(user);
-  } catch (err) {
-    next(err);
-  }
-}
+  return User.findById(id)
+    .orFail(() => {
+      throw new NotFoundError();
+    })
+    .then((user) => res.send(user))
+    .catch(next);
+};
 
-async function createUser(req, res, next) {
-  const {
-    name, about, avatar, email, password,
-  } = req.body;
+module.exports.updateUserInfo = (req, res, next) => {
+  const id = req.user._id;
 
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      name, about, avatar, email, password: hash,
+  return User.findByIdAndUpdate(id, {
+    name: req.body.name,
+    email: req.body.email,
+  }, {
+    new: true,
+    runValidators: true,
+  }).orFail(() => {
+    throw new NotFoundError();
+  })
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err.code === 11000) {
+        const conflictErr = new ConflictError();
+        next(conflictErr);
+      } else if (err instanceof mongoose.Error.ValidationError) {
+        const validationError = new BadRequestError();
+        validationError.message = err.message;
+        next(validationError);
+      } else {
+        next(err);
+      }
     });
+};
 
-    res.status(CREATED_201).send(user);
-  } catch (err) {
-    next(err);
-  }
-}
-
-async function updateUser(req, res, next) {
-  const { _id } = req.user;
-  try {
-    const user = await User.findByIdAndUpdate(
-      _id,
-      req.body,
-      { new: true, runValidators: true },
-    );
-    res.send(user);
-  } catch (err) {
-    next(err);
-  }
-}
-
-function clearCookie(req, res, next) {
-  try {
-    res.clearCookie('jwt').send({ message: 'Cookie clear' });
-  } catch (err) {
-    next(err);
-  }
-}
-
-module.exports = {
-  createUser, login, updateUser, clearCookie, getMe, getUser, getAllUsers,
+module.exports.logout = (req, res) => {
+  res.clearCookie('jwt')
+    .end();
 };
