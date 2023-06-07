@@ -2,21 +2,21 @@ const { celebrate, Joi } = require('celebrate');
 const { objectIdRegex } = require('./constants');
 const { REGEX } = require('./constants');
 
-module.exports.validatePatchUserData = celebrate({
+module.exports.validateInfoUser = celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     email: Joi.string().email(),
   }),
 });
 
-module.exports.validateSignInData = celebrate({
+module.exports.validateLogin = celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     password: Joi.string().required(),
   }),
 });
 
-module.exports.validateSignUpData = celebrate({
+module.exports.validateRegister = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
     email: Joi.string().required().email(),
@@ -24,7 +24,7 @@ module.exports.validateSignUpData = celebrate({
   }),
 });
 
-module.exports.validateCreateMovieData = celebrate({
+module.exports.validateCreateMovie = celebrate({
   body: Joi.object().keys({
     country: Joi.string().required(),
     director: Joi.string().required(),
@@ -40,7 +40,7 @@ module.exports.validateCreateMovieData = celebrate({
   }),
 });
 
-module.exports.validateDeleteMovieData = celebrate({
+module.exports.validateDeleteMovie = celebrate({
   params: Joi.object().keys({
     _id: Joi.string().regex(objectIdRegex).required(),
   }),
