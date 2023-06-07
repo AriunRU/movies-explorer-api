@@ -1,5 +1,4 @@
 const { celebrate, Joi } = require('celebrate');
-const { objectIdRegex } = require('./constants');
 const { REGEX } = require('./constants');
 
 module.exports.validateInfoUser = celebrate({
@@ -42,6 +41,6 @@ module.exports.validateCreateMovie = celebrate({
 
 module.exports.validateDeleteMovie = celebrate({
   params: Joi.object().keys({
-    _id: Joi.string().regex(objectIdRegex).required(),
+    _id: Joi.string().regex(REGEX).required(),
   }),
 });
