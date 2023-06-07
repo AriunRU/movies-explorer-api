@@ -5,6 +5,8 @@ module.exports.ERR_NOT_FOUND = 404;
 module.exports.ERR_CONFLICT = 409;
 module.exports.ERR_INTERNAL_SERVER = 500;
 
+module.exports.STATUS_OK_CREATED = 201;
+
 module.exports.ERR_MESSAGE_BAD_REQUEST = 'Переданы неверные данные';
 module.exports.ERR_MESSAGE_UNAUTHORIZED = 'Пользователь не авторизован';
 module.exports.ERR_MESSAGE_FORBIDDEN = 'Пользователь не является владельцем';

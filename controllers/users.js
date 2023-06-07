@@ -8,7 +8,7 @@ const NotFoundError = require('../customError/NotFoundError');
 const BadRequestError = require('../customError/BadRequestError');
 const ConflictError = require('../customError/ConflictError');
 const { JWT_SECRET } = require('../config');
-const { MESSAGE_SUCCESS_AUTH } = require('../utils/constants');
+const { MESSAGE_SUCCESS_AUTH, STATUS_OK_CREATED } = require('../utils/constants');
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
@@ -41,7 +41,7 @@ module.exports.createUser = (req, res, next) => {
   return bcrypt.hash(password, 10).then((hash) => User.create({
     ...req.body, password: hash,
   })
-    .then((user) => res.send({
+    .then((user) => res.status(STATUS_OK_CREATED).send({
       name: user.name,
       email: user.email,
       _id: user._id,
