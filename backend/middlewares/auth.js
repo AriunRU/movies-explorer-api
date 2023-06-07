@@ -1,16 +1,17 @@
-const UnauthorizedError = require('../utils/customError/UnauthorizedError');
-const { checkToken } = require('../utils/token');
+const jsonwebtoken = require('jsonwebtoken');
 
-const auth = (req, res, next) => {
-  const token = req.cookies.jwt;
-  const validateToken = checkToken(token);
-  if (!validateToken) {
-    throw new UnauthorizedError('Необходима авторизация');
+const { JWT_SECRET } = require('../config');
+const UnauthorizedError = require('../customError/UnauthorizedError');
+
+module.exports.auth = (req, res, next) => {
+  let payload;
+  const { jwt } = req.cookies;
+  try {
+    payload = jsonwebtoken.verify(jwt, JWT_SECRET);
+  } catch {
+    throw new UnauthorizedError();
   }
-  req.user = validateToken;
-  next();
-};
 
-module.exports = {
-  auth,
+  req.user = payload;
+  next();
 };
