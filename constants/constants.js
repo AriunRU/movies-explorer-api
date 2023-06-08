@@ -8,7 +8,7 @@ module.exports.ERR_INTERNAL_SERVER = 500;
 module.exports.STATUS_OK_CREATED = 201;
 
 module.exports.ERR_MESSAGE_BAD_REQUEST = 'Переданы неверные данные';
-module.exports.ERR_MESSAGE_UNAUTHORIZED = 'Пользователь не авторизован';
+module.exports.ERR_MESSAGE_UNAUTHORIZED = 'Неверный логин или пароль';
 module.exports.ERR_MESSAGE_FORBIDDEN = 'Пользователь не является владельцем';
 module.exports.ERR_MESSAGE_NOT_FOUND = 'Документ не найден';
 module.exports.ERR_MESSAGE_WRONG_PAGE = 'Страница не найдена';
@@ -16,7 +16,6 @@ module.exports.ERR_MESSAGE_CONFLICT_EMAIL = 'Пользователь с эти�
 module.exports.ERR_MESSAGE_CONFLICT_MOVIE_ID = 'Фильм с таким ID уже добавлен в избраное';
 module.exports.ERR_MESSAGE_INTERNAL_SERVER = 'Общая проблема с сервером';
 
-module.exports.MESSAGE_FAILED_AUTH = 'Неверный логин или пароль';
 module.exports.MESSAGE_SUCCESS_AUTH = 'Успешная авторизация';
 module.exports.MESSAGE_SUCCESS_LOGOUT = 'Успешный выход';
 module.exports.REGEX = /^https?:\/\/(?:www\.)?[A-Za-z0-9-._~:/?#[\]@!$&'()*+,;=]+(?:#[A-Za-z0-9-._~:/?#[\]@!$&'()*+,;=]+)?$/m;
