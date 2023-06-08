@@ -1,7 +1,9 @@
-const { MESSAGE_SUCCESS_LOGOUT } = require('../utils/constants');
+const { MESSAGE_SUCCESS_LOGOUT } = require('../constants/constants');
 
-module.exports.logout = (req, res) => {
-  res.clearCookie('jwt')
-    .send({ message: MESSAGE_SUCCESS_LOGOUT })
-    .end();
+module.exports.logout = (req, res, next) => {
+  try {
+    res.clearCookie('jwt').send({ message: MESSAGE_SUCCESS_LOGOUT });
+  } catch (err) {
+    next(err);
+  }
 };

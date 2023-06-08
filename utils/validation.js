@@ -1,10 +1,10 @@
 const { celebrate, Joi } = require('celebrate');
-const { REGEX } = require('./constants');
+const { REGEX } = require('../constants/constants');
 
 module.exports.validateInfoUser = celebrate({
   body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    email: Joi.string().email(),
+    name: Joi.string().min(2).max(30).required(),
+    email: Joi.string().email().required(),
   }),
 });
 
@@ -41,6 +41,6 @@ module.exports.validateCreateMovie = celebrate({
 
 module.exports.validateDeleteMovie = celebrate({
   params: Joi.object().keys({
-    _id: Joi.string().regex(REGEX).required(),
+    _id: Joi.string().length(24).hex().required(),
   }),
 });

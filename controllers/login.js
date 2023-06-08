@@ -4,7 +4,7 @@ const jsonwebtoken = require('jsonwebtoken');
 const User = require('../models/users');
 const UnauthorizedError = require('../customError/UnauthorizedError');
 const { JWT_SECRET } = require('../config');
-const { MESSAGE_SUCCESS_AUTH } = require('../utils/constants');
+const { MESSAGE_SUCCESS_AUTH } = require('../constants/constants');
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const { ERR_MESSAGE_CONFLICT_MOVIE_ID } = require('../utils/constants');
+const { ERR_MESSAGE_CONFLICT_MOVIE_ID } = require('../constants/constants');
 
 const Movie = require('../models/movies');
 const NotFoundError = require('../customError/NotFoundError');

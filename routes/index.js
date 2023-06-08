@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const NotFoundError = require('../customError/NotFoundError');
-const { ERR_MESSAGE_WRONG_PAGE } = require('../utils/constants');
+const { ERR_MESSAGE_WRONG_PAGE } = require('../constants/constants');
 
 const usersRoutes = require('./users');
 const moviesRoutes = require('./movie');
