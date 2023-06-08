@@ -3,7 +3,6 @@ const jsonwebtoken = require('jsonwebtoken');
 
 const User = require('../models/users');
 const UnauthorizedError = require('../customError/UnauthorizedError');
-const BadRequestError = require('../customError/BadRequestError');
 const { JWT_SECRET } = require('../config');
 const { MESSAGE_SUCCESS_AUTH } = require('../constants/constants');
 
@@ -13,13 +12,13 @@ module.exports.login = (req, res, next) => {
   User
     .findOne({ email }).select('+password')
     .orFail(() => {
-      throw new UnauthorizedError();
+      throw new UnauthorizedError('Неверный email или пароль');
     })
     .then((user) => bcrypt.compare(password, user.password).then((matched) => {
       if (matched) {
         return user;
       }
-      throw new BadRequestError();
+      throw new UnauthorizedError('Неверный email или пароль');
     }))
     .then((user) => {
       const jwt = jsonwebtoken.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
