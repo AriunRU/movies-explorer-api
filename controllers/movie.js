@@ -66,14 +66,14 @@ module.exports.createMovie = (req, res, next) => {
 };
 
 module.exports.deleteMovie = (req, res, next) => {
-  const { _id } = req.params;
+  const { movieId } = req.params;
 
-  return Movie.findById(_id)
+  return Movie.findById(movieId)
     .orFail(() => {
       throw new NotFoundError();
     })
     .then((movie) => {
-      if (movie.owner._id.toString() === req.user._id) {
+      if (movie.owner.movieId.toString() === req.user.movieId) {
         return movie.deleteOne();
       }
       throw new ForbiddenError();
