@@ -66,18 +66,28 @@ module.exports.createMovie = (req, res, next) => {
 };
 
 module.exports.deleteMovie = (req, res, next) => {
-  const { movieId } = req.params;
-
-  return Movie.findById(movieId)
-    .orFail(() => {
-      throw new NotFoundError();
-    })
+  const idUser = req.user._id;
+  Movie.findById(req.params.movieId)
     .then((movie) => {
-      if (movie.owner.movieId.toString() === req.user.movieId) {
-        return movie.deleteOne();
+      if (!movie) {
+        next(new NotFoundError());
+        return;
       }
-      throw new ForbiddenError();
+      if (movie.owner.toString() === idUser) {
+        Movie.deleteOne(movie._id)
+          .then(() => {
+            res.send({ message: 'Фильм удален' });
+          }).catch((err) => {
+            next(err);
+          });
+      } else {
+        next(new ForbiddenError());
+      }
     })
-    .then((movie) => res.send(movie))
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new BadRequestError());
+      }
+      return next(err);
+    });
 };
