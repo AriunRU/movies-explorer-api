@@ -1,5 +1,5 @@
 const ApplicationError = require('./ApplicationError');
-const { ERR_NOT_FOUND, ERR_MESSAGE_NOT_FOUND } = require('../utils/constants');
+const { ERR_NOT_FOUND, ERR_MESSAGE_NOT_FOUND } = require('../constants/constants');
 
 module.exports = class NotFoundError extends ApplicationError {
   constructor() {

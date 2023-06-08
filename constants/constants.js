@@ -16,6 +16,7 @@ module.exports.ERR_MESSAGE_CONFLICT_EMAIL = 'Пользователь с эти�
 module.exports.ERR_MESSAGE_CONFLICT_MOVIE_ID = 'Фильм с таким ID уже добавлен в избраное';
 module.exports.ERR_MESSAGE_INTERNAL_SERVER = 'Общая проблема с сервером';
 
+module.exports.MESSAGE_FAILED_AUTH = 'Неверный логин или пароль';
 module.exports.MESSAGE_SUCCESS_AUTH = 'Успешная авторизация';
 module.exports.MESSAGE_SUCCESS_LOGOUT = 'Успешный выход';
 module.exports.REGEX = /^https?:\/\/(?:www\.)?[A-Za-z0-9-._~:/?#[\]@!$&'()*+,;=]+(?:#[A-Za-z0-9-._~:/?#[\]@!$&'()*+,;=]+)?$/m;

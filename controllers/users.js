@@ -5,7 +5,7 @@ const User = require('../models/users');
 const NotFoundError = require('../customError/NotFoundError');
 const BadRequestError = require('../customError/BadRequestError');
 const ConflictError = require('../customError/ConflictError');
-const { STATUS_OK_CREATED } = require('../utils/constants');
+const { STATUS_OK_CREATED } = require('../constants/constants');
 
 module.exports.createUser = (req, res, next) => {
   const { password } = req.body;
