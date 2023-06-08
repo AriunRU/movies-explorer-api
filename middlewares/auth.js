@@ -9,7 +9,7 @@ module.exports.auth = (req, res, next) => {
   try {
     payload = jsonwebtoken.verify(jwt, JWT_SECRET);
   } catch {
-    throw new UnauthorizedError('Необходима регистрация');
+    throw new UnauthorizedError();
   }
 
   req.user = payload;
