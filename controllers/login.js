@@ -13,13 +13,13 @@ module.exports.login = (req, res, next) => {
   User
     .findOne({ email }).select('+password')
     .orFail(() => {
-      throw new BadRequestError();
+      throw new UnauthorizedError();
     })
     .then((user) => bcrypt.compare(password, user.password).then((matched) => {
       if (matched) {
         return user;
       }
-      throw new UnauthorizedError();
+      throw new BadRequestError();
     }))
     .then((user) => {
       const jwt = jsonwebtoken.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
