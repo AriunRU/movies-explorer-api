@@ -1,100 +1,70 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
-const NotFound = require('../errors/NotFound');
-const BadRequest = require('../errors/BadRequest');
-const Conflicted = require('../errors/Conflicted');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
-const { JWT_SECRET_DEV } = require('../utils/constants');
+const User = require('../models/users');
+const NotFoundError = require('../customError/NotFoundError');
+const BadRequestError = require('../customError/BadRequestError');
+const ConflictError = require('../customError/ConflictError');
+const { STATUS_OK_CREATED } = require('../constants/constants');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
-const { CREATED_CODE } = require('../errors/StatusCode');
-
-const createUser = (req, res, next) => {
-  bcrypt.hash(req.body.password, 10)
-    .then((hash) => User.create({
-      email: req.body.email,
-      password: hash,
-      name: req.body.name,
-    }))
-    .then((user) => res.status(CREATED_CODE).send({
-      email: user.email,
+module.exports.createUser = (req, res, next) => {
+  const { password } = req.body;
+  return bcrypt.hash(password, 10).then((hash) => User.create({
+    ...req.body, password: hash,
+  })
+    .then((user) => res.status(STATUS_OK_CREATED).send({
       name: user.name,
+      email: user.email,
       _id: user._id,
     }))
     .catch((err) => {
       if (err.code === 11000) {
-        next(new Conflicted('Пользователь уже существует'));
-      } else if (err.name === 'ValidationError') {
-        next(new BadRequest('Некорректные данные при создании пользователя'));
+        const conflictErr = new ConflictError();
+        next(conflictErr);
+      } else if (err instanceof mongoose.Error.ValidationError) {
+        const validationError = new BadRequestError();
+        validationError.message = err.message;
+        next(validationError);
       } else {
         next(err);
       }
-    });
+    }));
 };
 
-const login = (req, res, next) => {
-  const { email, password } = req.body;
-  return User.findUserByCredentials(email, password)
-    .then((user) => {
-      // создадим токен
-      const token = jwt.sign(
-        { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : JWT_SECRET_DEV,
-        { expiresIn: '7d' },
-      );
+module.exports.getUser = (req, res, next) => {
+  const id = req.user._id;
 
-      // вернём токен
-      res.send({ token });
+  return User.findById(id)
+    .orFail(() => {
+      throw new NotFoundError();
     })
+    .then((user) => res.send(user))
     .catch(next);
 };
 
-const getCurrentUser = (req, res, next) => {
-  const userId = req.user._id;
-  User.findById(userId)
-    .orFail(() => {
-      throw new NotFound('Пользователь с указанным id не найден');
-    })
-    .then((user) => {
-      res.send(user);
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequest('Пользователь не найден'));
-      } else {
-        next(err);
-      }
-    });
-};//
+module.exports.updateUserInfo = (req, res, next) => {
+  const id = req.user._id;
 
-const updateUser = (req, res, next) => {
-  const { email, name } = req.body;
-  User.findByIdAndUpdate(
-    req.user._id,
-    { email, name },
-    {
-      new: true,
-      runValidators: true,
-    },
-  )
-    .orFail(() => {
-      throw new NotFound('Пользователь с указанным id не найден');
-    })
-    .then((user) => {
-      res.send(user);
-    })
+  return User.findByIdAndUpdate(id, {
+    name: req.body.name,
+    email: req.body.email,
+  }, {
+    new: true,
+    runValidators: true,
+  }).orFail(() => {
+    throw new NotFoundError();
+  })
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.code === 11000) {
-        next(new Conflicted('Такой пользователь уже существует'));
-      } else if (err.name === 'ValidationError') {
-        next(new BadRequest('Некорректные данные при обновлении профиля'));
+        const conflictErr = new ConflictError();
+        next(conflictErr);
+      } else if (err instanceof mongoose.Error.ValidationError) {
+        const validationError = new BadRequestError();
+        validationError.message = err.message;
+        next(validationError);
       } else {
         next(err);
       }
     });
-};//
-
-module.exports = {
-  createUser, getCurrentUser, updateUser, login,
 };

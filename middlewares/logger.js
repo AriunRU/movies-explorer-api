@@ -1,22 +1,39 @@
 const winston = require('winston');
 const expressWinston = require('express-winston');
 
-const requestLogger = expressWinston.logger({
+module.exports.requestLogger = expressWinston.logger({
   transports: [
-    new winston.transports.File({ filename: 'request.log' }),
+    new winston.transports.File({
+      filename: 'request.log',
+      maxsize: 1000000,
+      maxFiles: 5,
+    }),
   ],
   format: winston.format.json(),
 });
 
-// логгер ошибок
-const errorLogger = expressWinston.errorLogger({
+module.exports.errorLogger = expressWinston.errorLogger({
   transports: [
-    new winston.transports.File({ filename: 'error.log' }),
+    new winston.transports.File({
+      filename: 'error.log',
+      maxsize: 1000000,
+      maxFiles: 5,
+    }),
   ],
   format: winston.format.json(),
 });
 
-module.exports = {
-  requestLogger,
-  errorLogger,
-};
+module.exports.startLogger = winston.createLogger({
+  transports: [
+    new winston.transports.File({
+      filename: 'app.log',
+      maxsize: 1000000,
+      maxFiles: 5,
+    }),
+    new winston.transports.Console(),
+  ],
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.simple(),
+  ),
+});

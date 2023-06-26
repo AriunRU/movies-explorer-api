@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
+const { REGEX } = require('../constants/constants');
 
 const movieSchema = new mongoose.Schema({
   country: {
@@ -26,24 +26,30 @@ const movieSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validator: (link) => validator.isURL(String(link)),
-      message: 'Неправильный формат ссылки',
+      validator(v) {
+        return REGEX.test(v);
+      },
+      message: 'Неверный формат ccылки',
     },
   },
   trailerLink: {
     type: String,
     required: true,
     validate: {
-      validator: (link) => validator.isURL(String(link)),
-      message: 'Неправильный формат ссылки',
+      validator(v) {
+        return REGEX.test(v);
+      },
+      message: 'Неверный формат ccылки',
     },
   },
   thumbnail: {
     type: String,
     required: true,
     validate: {
-      validator: (link) => validator.isURL(String(link)),
-      message: 'Неправильный формат ссылки',
+      validator(v) {
+        return REGEX.test(v);
+      },
+      message: 'Неверный формат ccылки',
     },
   },
   owner: {
@@ -63,6 +69,7 @@ const movieSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+}, {
+  versionKey: false,
 });
-
 module.exports = mongoose.model('movie', movieSchema);
