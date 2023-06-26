@@ -1,45 +1,42 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const express = require('express');
 const helmet = require('helmet');
-const { errors } = require('celebrate');
-const process = require('process');
 const cors = require('cors');
-const corsOptions = require('./middlewares/cors');
-const limiter = require('./middlewares/rateLimit');
-const router = require('./routes/index');
-const errorHandler = require('./middlewares/errorHandler');
-const { requestLogger, errorLogger } = require('./middlewares/logger');
-const { MONGO_URL_DEV } = require('./utils/constants');
+const express = require('express');
+const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
 
-const { NODE_ENV, MONGO_URL } = process.env;
+const celebrate = require('celebrate');
 
-const { PORT = 3000 } = process.env;
+const routes = require('./routes');
+
+const {
+  PORT,
+  DB_ADDRESS,
+  NODE_ENV,
+  corsOptions,
+  limiterOptions,
+} = require('./config');
+
+const { appErrorHandler } = require('./middlewares/appErrorHandler');
+const { requestLogger, errorLogger, startLogger } = require('./middlewares/logger');
+
+mongoose.connect(DB_ADDRESS, {
+  useNewUrlParser: true,
+});
 
 const app = express();
 
-mongoose.connect(NODE_ENV === 'production' ? MONGO_URL : MONGO_URL_DEV);
-
-app.use(express.json());
-
-app.use(cors(corsOptions));
-
 app.use(requestLogger);
-
+app.use(rateLimit(limiterOptions));
 app.use(helmet());
-
-app.use(limiter);
-
-app.use(router);
-
+app.use(cors(corsOptions));
+app.use(cookieParser());
+app.use(express.json());
+app.use(routes);
 app.use(errorLogger);
+app.use(celebrate.errors());
+app.use(appErrorHandler);
 
-app.use(errors());
-
-app.use(errorHandler);
-
-process.on('uncaughtException', (err) => {
-  console.log(err);
+app.listen(PORT, () => {
+  startLogger.info(`App listening on port ${PORT} in ${NODE_ENV} mode`);
 });
-
-app.listen(PORT);
