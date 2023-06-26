@@ -6,7 +6,7 @@ const {
 
 const { validateInfoUser } = require('../utils/validation');
 
-router.get('/me', getUser);
-router.patch('/me', validateInfoUser, updateUserInfo);
+router.get('/users/me', getUser);
+router.patch('/users/me', validateInfoUser, updateUserInfo);
 
 module.exports = router;
