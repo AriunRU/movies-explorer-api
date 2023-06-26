@@ -4,7 +4,8 @@ const express = require('express');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
 const process = require('process');
-const cors = require('./middlewares/cors');
+const cors = require('cors');
+const corsOptions = require('./middlewares/cors');
 const limiter = require('./middlewares/rateLimit');
 const router = require('./routes/index');
 const errorHandler = require('./middlewares/errorHandler');
@@ -21,7 +22,7 @@ mongoose.connect(NODE_ENV === 'production' ? MONGO_URL : MONGO_URL_DEV);
 
 app.use(express.json());
 
-app.use(cors);
+app.use(cors(corsOptions));
 
 app.use(requestLogger);
 
