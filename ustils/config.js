@@ -25,15 +25,15 @@ const UNAUTHORIZED_AUTH_MESSAGE = 'Необхадима авторизация';
 const UNAUTHORIZED_LOGIN_MESSAGE = 'Неправильные почта или пароль';
 const SERVER_ERROR_MESSAGE = 'На сервере произошла ошибка';
 
-/* const allowedCors = [
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://100.96.53.82:3001',
-  'http://100.96.53.82',
-  'https://100.96.53.82',
+const allowedCors = [
+  'http://localhost:3000',
+  'http://localhost:3000',
+  'http://158.160.38.132:3000',
+  'http://158.160.38.132',
+  'https://158.160.38.132',
   'https://marsello.diploma.nomoredomains.rocks',
   'https://marsello.diploma.nomoredomains.rocks',
-]; */
+];
 
 const DEFAULT_ALLOWED_METHODS = 'GET,HEAD,PUT,PATCH,POST,DELETE';
 
@@ -61,6 +61,6 @@ module.exports = {
   UNAUTHORIZED_AUTH_MESSAGE,
   UNAUTHORIZED_LOGIN_MESSAGE,
   SERVER_ERROR_MESSAGE,
-  // allowedCors,
+  allowedCors,
   DEFAULT_ALLOWED_METHODS,
 };

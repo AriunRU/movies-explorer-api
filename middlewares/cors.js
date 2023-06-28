@@ -1,4 +1,4 @@
-/* const { allowedCors, DEFAULT_ALLOWED_METHODS } = require('../ustils/config');
+const { allowedCors, DEFAULT_ALLOWED_METHODS } = require('../ustils/config');
 
 module.exports.cors = (req, res, next) => {
   const { origin } = req.headers;
@@ -20,4 +20,4 @@ module.exports.cors = (req, res, next) => {
     return res.end();
   }
   return next();
-}; */
+};
