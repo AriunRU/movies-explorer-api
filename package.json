@@ -1,41 +1,40 @@
 {
-  "name": "movies-explorer-api",
+  "name": "moves-explorer-api",
   "version": "1.0.0",
-  "description": "Backend for movies-explorer",
-  "main": "app.js",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "npx eslint .",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "lint": "npx eslint .",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AriunRU/movies-explorer-api"
+    "url": "git+https://github.com/vsgofman/movies-explorer-api.git"
   },
-  "author": "Vadim Markelov",
+  "author": "Viktor Gofman",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/AriunRU/movies-explorer-api/issues"
+    "url": "https://github.com/vsgofman/movies-explorer-api/issues"
   },
-  "homepage": "https://github.com/AriunRU/movies-explorer-api#readme",
+  "homepage": "https://github.com/vsgofman/movies-explorer-api#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "celebrate": "^15.0.1",
-    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-rate-limit": "^6.7.0",
     "express-winston": "^4.2.0",
-    "helmet": "^7.0.0",
+    "helmet": "^6.1.5",
     "jsonwebtoken": "^9.0.0",
-    "mongoose": "^7.2.0",
+    "mongoose": "^7.0.3",
     "validator": "^13.9.0",
     "winston": "^3.8.2"
   },
   "devDependencies": {
-    "eslint": "^8.41.0",
+    "eslint": "^8.38.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
     "nodemon": "^2.0.22"

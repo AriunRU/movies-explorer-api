@@ -1,22 +1,26 @@
+const { JWT_SECRET, NODE_ENV } = process.env;
 const jwt = require('jsonwebtoken');
-const UnauthorizedError = require('../errors/UnauthorizedError');
-const { checkJWT, UNAUTHORIZED_AUTH_MESSAGE } = require('../ustils/config');
+const UnauthorizedApiError = require('../errors/UnauthorizedApiError');
+const {
+  authorizationRequired,
+  invalidToken,
+} = require('../utils/constants');
 
-module.exports = (req, res, next) => {
-  const token = req.cookies.jwt;
-  if (!token) {
-    return next(new UnauthorizedError(UNAUTHORIZED_AUTH_MESSAGE));
+module.exports.auth = (req, res, next) => {
+  const { authorization } = req.headers;
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    throw new UnauthorizedApiError(authorizationRequired);
   }
-
+  const token = authorization.replace('Bearer ', '');
   let payload;
-
   try {
-    payload = jwt.verify(token, checkJWT);
-  } catch (error) {
-    return next(UnauthorizedError(UNAUTHORIZED_AUTH_MESSAGE));
+    payload = jwt.verify(token, NODE_ENV === 'production' ? JWT_SECRET : 'jwt');
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError') {
+      throw new UnauthorizedApiError(invalidToken);
+    }
+    throw new UnauthorizedApiError(authorizationRequired);
   }
-
   req.user = payload;
-  console.log(req.cookies.jwt, 'Cookie');
   return next();
 };

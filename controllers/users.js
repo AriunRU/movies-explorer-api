@@ -1,98 +1,63 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
 const User = require('../models/user');
-const NotFoundError = require('../errors/NotFoundError');
-const { handleError } = require('../ustils/handleError');
+const BadRequestApiError = require('../errors/BadRequestApiError');
+const NotFoundApiError = require('../errors/NotFoundApiError');
+const ConflictApiError = require('../errors/ConflictApiError');
 const {
-  checkJWT,
-  DELETE_MESSAGE,
-  NOT_FOUND_MESSAGE,
-  CREATED_CODE,
-  OK_CODE,
-} = require('../ustils/config');
-
-const { NODE_ENV } = process.env;
-
-const createUser = (req, res, next) => {
-  const { email, password, name } = req.body;
-
-  return bcrypt.hash(password, 10)
-    .then((hash) => User.create({ email, password: hash, name }))
-    .then((user) => {
-      const newUser = user.toObject();
-      delete newUser.password;
-      res.status(CREATED_CODE).send(newUser);
-    })
-    .catch((err) => handleError(err, next));
-};
-
-const login = (req, res, next) => {
-  const { email, password } = req.body;
-  User.findUserByCredentails(email, password)
-    .then((user) => {
-      const token = jwt.sign(
-        { _id: user._id },
-        checkJWT,
-        { expiresIn: '7d' },
-      );
-      const newUser = user.toObject();
-      delete newUser.password;
-      console.log(token);
-      return res.cookie(
-        'jwt',
-        token,
-        {
-          httpOnly: true,
-          secure: NODE_ENV === 'production',
-          sameSite: 'none',
-          maxAge: 3600000 * 24 * 7,
-        },
-      )
-        .send(newUser);
-    })
-    .catch(next);
-};
-
-const logout = (req, res) => {
-  res
-    .clearCookie('jwt')
-    .send({ message: DELETE_MESSAGE });
-};
+  notFoundUser,
+  badRequestFindUser,
+  badRequestUpdateUser,
+  conflictUpdateUser,
+} = require('../utils/constants');
 
 const getCurrentUser = (req, res, next) => {
-  const { _id } = req.user;
-
-  User.findById(_id)
+  User.findById(req.user._id)
     .then((user) => {
-      if (!user) {
-        throw new NotFoundError(NOT_FOUND_MESSAGE);
+      if (user === null) {
+        throw new NotFoundApiError(notFoundUser);
       }
-      return res.status(OK_CODE).send(user);
-    })
-    .catch((err) => handleError(err, next));
+      res.status(200).send({
+        email: user.email,
+        name: user.name,
+      });
+    }).catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestApiError(badRequestFindUser));
+      } else {
+        next(err);
+      }
+    });
 };
 
-const setUserInfo = (req, res, next) => {
-  const { _id } = req.user;
-  const { name, email } = req.body;
-
-  return User.findByIdAndUpdate(
-    _id,
-    { name, email },
-    { new: true, runValidators: true },
+const updateProfile = (req, res, next) => {
+  User.findByIdAndUpdate(
+    req.user._id,
+    {
+      name: req.body.name,
+      email: req.body.email,
+    },
+    {
+      new: true, // обработчик then получит на вход обновлённую запись
+      runValidators: true, // данные будут валидированы перед изменением
+    },
   ).then((user) => {
-    if (!user) {
-      throw new NotFoundError(NOT_FOUND_MESSAGE);
+    if (user === null) {
+      throw new NotFoundApiError(notFoundUser);
     }
-    return res.status(OK_CODE).send(user);
-  }).catch((err) => handleError(err, next));
+    res.status(200).send(user);
+  }).catch((err) => {
+    if (err.name === 'CastError') {
+      next(new BadRequestApiError(badRequestFindUser));
+    }
+    if (err.name === 'ValidationError') {
+      next(new BadRequestApiError(badRequestUpdateUser));
+    }
+    if (err.code === 11000) {
+      next(new ConflictApiError(conflictUpdateUser));
+    } next(err);
+  });
 };
 
 module.exports = {
-  createUser,
-  login,
-  logout,
   getCurrentUser,
-  setUserInfo,
+  updateProfile,
 };

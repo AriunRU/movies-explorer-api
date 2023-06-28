@@ -1,9 +1,13 @@
-const usersRouter = require('express').Router();
+const router = require('express').Router();
+const { validateUpdateProfile } = require('../utils/validation');
+const {
+  getCurrentUser,
+  updateProfile,
+} = require('../controllers/users');
 
-const { getCurrentUser, setUserInfo } = require('../controllers/users');
-const { setUserInfoValidation } = require('../middlewares/validation');
+// GET /users/me возвращает информацию о пользователе (email и имя)
+router.get('/me', getCurrentUser);
+// PATCH /users/me обновляет информацию о пользователе (email и имя)
+router.patch('/me', validateUpdateProfile, updateProfile);
 
-usersRouter.get('/me', getCurrentUser);
-usersRouter.patch('/me', setUserInfoValidation, setUserInfo);
-
-module.exports = usersRouter;
+module.exports = router;

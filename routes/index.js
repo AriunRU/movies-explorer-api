@@ -1,23 +1,19 @@
 const router = require('express').Router();
+const usersRoutes = require('./users');
+const moviesRoutes = require('./movies');
+const signupRoute = require('./sign-up');
+const signinRoute = require('./sign-in');
+const { auth } = require('../middlewares/auth');
+const NotFoundApiError = require('../errors/NotFoundApiError');
+const { notFoundPage } = require('../utils/constants');
 
-const { createUser, login, logout } = require('../controllers/users');
-const { registrationValidation, loginValidation } = require('../middlewares/validation');
-const NotFoundError = require('../errors/NotFoundError');
-const auth = require('../middlewares/auth');
-const moviesRouter = require('./movies');
-const usersRouter = require('./users');
-const { NOT_FOUND_PATH_MESSAGE } = require('../ustils/config');
-
-router.post('/signup', registrationValidation, createUser);
-router.post('/signin', loginValidation, login);
-
+router.use('/', signupRoute);
+router.use('/', signinRoute);
 router.use(auth);
-
-router.post('/signout', logout);
-router.use('/users', usersRouter);
-router.use('/movies', moviesRouter);
+router.use('/users', usersRoutes);
+router.use('/movies', moviesRoutes);
 router.use('*', (req, res, next) => {
-  next(new NotFoundError(NOT_FOUND_PATH_MESSAGE));
+  next(new NotFoundApiError(notFoundPage));
 });
 
 module.exports = router;

@@ -1,39 +1,26 @@
-const NotFoundError = require('../errors/NotFoundError');
-const ForbiddenError = require('../errors/ForbiddenError');
 const Movie = require('../models/movie');
-const { handleError } = require('../ustils/handleError');
+const BadRequestApiError = require('../errors/BadRequestApiError');
+const NotFoundApiError = require('../errors/NotFoundApiError');
+const ForbiddenApiError = require('../errors/ForbiddenApiError');
 const {
-  FORBIDDEN_MESSAGE,
-  NOT_FOUND_MESSAGE,
-  DELETE_MESSAGE,
-  OK_CODE,
-  CREATED_CODE,
-} = require('../ustils/config');
+  badRequestCreateMovie,
+  notFoundDeleteMovie,
+  forbiddenDeleteMovie,
+  badRequestDeleteMovie,
+  successDeleteMovie,
+} = require('../utils/constants');
 
-const getMoviesSavedByUser = (req, res, next) => {
-  Movie.find({ owner: req.user._id })
-    .populate('owner')
-    .then((movies) => {
-      res.status(OK_CODE).send(movies);
-    })
-    .catch(next);
-};
+// GET /movies
+const getSavedMovies = (req, res, next) => Movie.find({ owner: req.user._id })
+  .then((movies) => res.status(200).send(movies))
+  .catch(next);
 
+// POST /movies
 const createMovie = (req, res, next) => {
   const {
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    thumbnail,
-    movieId,
-    nameRU,
-    nameEN,
+    country, director, duration, year, description, image,
+    trailer, nameRU, nameEN, thumbnail, movieId,
   } = req.body;
-
   Movie.create({
     country,
     director,
@@ -41,37 +28,46 @@ const createMovie = (req, res, next) => {
     year,
     description,
     image,
-    trailerLink,
+    trailerLink: trailer,
     thumbnail,
     owner: req.user._id,
     movieId,
     nameRU,
     nameEN,
-  }).then((newMovie) => {
-    Movie.findById(newMovie._id)
-      .populate('owner')
-      .then((createdMovie) => res.status(CREATED_CODE).send(createdMovie))
-      .catch((err) => handleError(err, next));
-  }).catch((err) => handleError(err, next));
+  }).then((movie) => res.status(200).send(movie))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestApiError(badRequestCreateMovie));
+      } else {
+        next(err);
+      }
+    });
 };
 
-const deleteMovie = (req, res, next) => {
-  Movie.findById(req.params.id)
+// DELETE /movies/:movieId
+const deleteMovieById = (req, res, next) => {
+  Movie.findOne({ _id: req.params.movieId })
     .then((movie) => {
-      if (!movie) {
-        throw new NotFoundError(NOT_FOUND_MESSAGE);
+      if (movie === null) {
+        throw new NotFoundApiError(notFoundDeleteMovie);
       }
       if (movie.owner.valueOf() !== req.user._id) {
-        throw new ForbiddenError(FORBIDDEN_MESSAGE);
+        throw new ForbiddenApiError(forbiddenDeleteMovie);
       }
-      return movie.deleteOne();
-    })
-    .then(() => res.status(OK_CODE).send({ message: DELETE_MESSAGE }))
-    .catch((err) => handleError(err, next));
+      return Movie.findByIdAndRemove(req.params.movieId)
+        .then(() => res.status(200).send({ message: successDeleteMovie }))
+        .catch(next);
+    }).catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestApiError(badRequestDeleteMovie));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports = {
-  getMoviesSavedByUser,
+  getSavedMovies,
   createMovie,
-  deleteMovie,
+  deleteMovieById,
 };
