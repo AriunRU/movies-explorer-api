@@ -1,17 +1,22 @@
-const jsonwebtoken = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
+const UnauthorizedError = require('../errors/UnauthorizedError');
+const { checkJWT, UNAUTHORIZED_AUTH_MESSAGE } = require('../ustils/config');
 
-const { JWT_SECRET } = require('../config');
-const UnauthorizedError = require('../customError/UnauthorizedError');
+module.exports = (req, res, next) => {
+  const token = req.cookies.jwt;
+  if (!token) {
+    return next(new UnauthorizedError(UNAUTHORIZED_AUTH_MESSAGE));
+  }
 
-module.exports.auth = (req, res, next) => {
   let payload;
-  const { jwt } = req.cookies;
+
   try {
-    payload = jsonwebtoken.verify(jwt, JWT_SECRET);
-  } catch {
-    throw new UnauthorizedError();
+    payload = jwt.verify(token, checkJWT);
+  } catch (error) {
+    return next(UnauthorizedError(UNAUTHORIZED_AUTH_MESSAGE));
   }
 
   req.user = payload;
-  next();
+  console.log(req.cookies.jwt, 'Cookie');
+  return next();
 };

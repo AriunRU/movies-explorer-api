@@ -1,28 +1,23 @@
 const router = require('express').Router();
-const NotFoundError = require('../customError/NotFoundError');
-const { ERR_MESSAGE_WRONG_PAGE } = require('../constants/constants');
 
-const usersRoutes = require('./users');
-const moviesRoutes = require('./movie');
+const { createUser, login, logout } = require('../controllers/users');
+const { registrationValidation, loginValidation } = require('../middlewares/validation');
+const NotFoundError = require('../errors/NotFoundError');
+const auth = require('../middlewares/auth');
+const moviesRouter = require('./movies');
+const usersRouter = require('./users');
+const { NOT_FOUND_PATH_MESSAGE } = require('../ustils/config');
 
-const { validateLogin, validateRegister } = require('../utils/validation');
-const { createUser } = require('../controllers/users');
-const { login } = require('../controllers/login');
-const { logout } = require('../controllers/logout');
-const { auth } = require('../middlewares/auth');
+router.post('/signup', registrationValidation, createUser);
+router.post('/signin', loginValidation, login);
 
-router.post('/signin', validateLogin, login);
-router.post('/signup', validateRegister, createUser);
+router.use(auth);
 
-router.use('/', auth, usersRoutes);
-router.use('/', auth, moviesRoutes);
-
-router.post('/signout', auth, logout);
-
-router.use('*', auth, (req, res, next) => {
-  const err = new NotFoundError();
-  err.message = ERR_MESSAGE_WRONG_PAGE;
-  next(err);
+router.post('/signout', logout);
+router.use('/users', usersRouter);
+router.use('/movies', moviesRouter);
+router.use('*', (req, res, next) => {
+  next(new NotFoundError(NOT_FOUND_PATH_MESSAGE));
 });
 
 module.exports = router;

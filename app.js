@@ -1,42 +1,52 @@
-const helmet = require('helmet');
-const cors = require('cors');
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const { errors } = require('celebrate');
 
-const celebrate = require('celebrate');
-
-const routes = require('./routes');
-
-const {
-  PORT,
-  DB_ADDRESS,
-  NODE_ENV,
-  corsOptions,
-  limiterOptions,
-} = require('./config');
-
-const { appErrorHandler } = require('./middlewares/appErrorHandler');
-const { requestLogger, errorLogger, startLogger } = require('./middlewares/logger');
-
-mongoose.connect(DB_ADDRESS, {
-  useNewUrlParser: true,
-});
+const { PORT, DATABASE_URL } = require('./ustils/config');
+const { centralizedErrorHandler } = require('./middlewares/centralizedErrorHandler');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+const { cors } = require('./middlewares/cors');
+const router = require('./routes');
+const productionJwtCheck = require('./ustils/productionJwtCheck');
+const { rateLimiter } = require('./middlewares/rateLimiter');
 
 const app = express();
 
-app.use(requestLogger);
-app.use(rateLimit(limiterOptions));
 app.use(helmet());
-app.use(cors(corsOptions));
-app.use(cookieParser());
+app.use(cors);
+
+mongoose.connect(DATABASE_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('База данных подключена'))
+  .catch((err) => {
+    console.log('\x1b[31m%s\x1b[0m', 'Ошибка в подключении БД');
+    console.error(err);
+  });
+
 app.use(express.json());
-app.use(routes);
+app.use(express.urlencoded({ extended: true }));
+
+app.use(cookieParser());
+
+app.use(requestLogger);
+app.use(rateLimiter);
+// функционал роутинга
+app.use(router);
+
 app.use(errorLogger);
-app.use(celebrate.errors());
-app.use(appErrorHandler);
+
+app.use(errors());
+// централизированная обработка ошибок
+app.use(centralizedErrorHandler);
 
 app.listen(PORT, () => {
-  startLogger.info(`App listening on port ${PORT} in ${NODE_ENV} mode`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('\x1b[33m%s\x1b[0m', 'Код запущен в режиме разработки');
+  }
+  productionJwtCheck();
+  console.log(`Сервер запущен, порт ${PORT}`);
 });
