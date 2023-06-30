@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vsgofman/movies-explorer-api.git"
+    "url": "git+https://github.com/AriunRU/movies-explorer-api"
   },
   "author": "Viktor Gofman",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/vsgofman/movies-explorer-api/issues"
+    "url": "https://github.com/AriunRU/movies-explorer-api/issues"
   },
-  "homepage": "https://github.com/vsgofman/movies-explorer-api#readme",
+  "homepage": "https://github.com/AriunRU/movies-explorer-api#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "celebrate": "^15.0.1",

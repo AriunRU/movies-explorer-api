@@ -36,8 +36,8 @@ const updateProfile = (req, res, next) => {
       email: req.body.email,
     },
     {
-      new: true, // обработчик then получит на вход обновлённую запись
-      runValidators: true, // данные будут валидированы перед изменением
+      new: true,
+      runValidators: true,
     },
   ).then((user) => {
     if (user === null) {

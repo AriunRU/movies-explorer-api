@@ -26,17 +26,17 @@ const movieSchema = new mongoose.Schema(
     image: {
       type: String,
       required: true,
-      validate: { validator: ValidateUrlRegExp, message: 'Введите валидную ссылку' },
+      validate: { validator: ValidateUrlRegExp, message: 'Введите ссылку' },
     },
     trailerLink: {
       type: String,
       required: true,
-      validate: { validator: ValidateUrlRegExp, message: 'Введите валидную ссылку' },
+      validate: { validator: ValidateUrlRegExp, message: 'Введите ссылку' },
     },
     thumbnail: {
       type: String,
       required: true,
-      validate: { validator: ValidateUrlRegExp, message: 'Введите валидную ссылку' },
+      validate: { validator: ValidateUrlRegExp, message: 'Введите ссылку' },
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

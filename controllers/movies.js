@@ -10,12 +10,10 @@ const {
   successDeleteMovie,
 } = require('../utils/constants');
 
-// GET /movies
 const getSavedMovies = (req, res, next) => Movie.find({ owner: req.user._id })
   .then((movies) => res.status(200).send(movies))
   .catch(next);
 
-// POST /movies
 const createMovie = (req, res, next) => {
   const {
     country, director, duration, year, description, image,
@@ -44,7 +42,6 @@ const createMovie = (req, res, next) => {
     });
 };
 
-// DELETE /movies/:movieId
 const deleteMovieById = (req, res, next) => {
   Movie.findOne({ _id: req.params.movieId })
     .then((movie) => {
