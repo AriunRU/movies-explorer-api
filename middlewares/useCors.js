@@ -1,8 +1,9 @@
 const allowedCors = [
   'https://ariun-movies.nomoredomains.rocks',
   'http://ariun-movies.nomoredomains.rocks',
+  'https://api.ariun-movies.nomoredomains.rocks',
+  'http://api.ariun-movies.nomoredomains.rocks',
   'http://localhost:3000',
-  'http://localhost:3001',
 ];
 
 const DEFAULT_ALLOWED_METHODS = 'GET,HEAD,PUT,PATCH,POST,DELETE';
