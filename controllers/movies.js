@@ -1,23 +1,28 @@
+const mongoose = require('mongoose');
 const Movie = require('../models/movie');
-const BadRequestApiError = require('../errors/BadRequestApiError');
-const NotFoundApiError = require('../errors/NotFoundApiError');
-const ForbiddenApiError = require('../errors/ForbiddenApiError');
-const {
-  badRequestCreateMovie,
-  notFoundDeleteMovie,
-  forbiddenDeleteMovie,
-  badRequestDeleteMovie,
-  successDeleteMovie,
-} = require('../utils/constants');
+const RequestError = require('../utils/errors/request-err');
+const NotFoundError = require('../utils/errors/not-found-err');
+const ForbiddenError = require('../utils/errors/forbidden-err');
 
-const getSavedMovies = (req, res, next) => Movie.find({ owner: req.user._id })
-  .then((movies) => res.status(200).send(movies))
-  .catch(next);
+const getMovies = (req, res, next) => {
+  Movie.find({})
+    .then((movies) => res.send(movies))
+    .catch(next);
+};
 
-const createMovie = (req, res, next) => {
+const addMovie = (req, res, next) => {
   const {
-    country, director, duration, year, description, image,
-    trailer, nameRU, nameEN, thumbnail, movieId,
+    country,
+    director,
+    duration,
+    year,
+    description,
+    image,
+    trailerLink,
+    thumbnail,
+    movieId,
+    nameRU,
+    nameEN,
   } = req.body;
   Movie.create({
     country,
@@ -26,45 +31,45 @@ const createMovie = (req, res, next) => {
     year,
     description,
     image,
-    trailerLink: trailer,
+    trailerLink,
     thumbnail,
     owner: req.user._id,
     movieId,
     nameRU,
     nameEN,
-  }).then((movie) => res.status(200).send(movie))
+  })
+    .then((movie) => res.status(201).send(movie))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new BadRequestApiError(badRequestCreateMovie));
+      if (err instanceof mongoose.Error.ValidationError) {
+        next(new RequestError('Переданы некорректные данные в форме добавления фильма'));
       } else {
         next(err);
       }
     });
 };
 
-const deleteMovieById = (req, res, next) => {
-  Movie.findOne({ _id: req.params.movieId })
+const deleteMovie = (req, res, next) => {
+  Movie.findById(req.params._id)
+    .orFail()
     .then((movie) => {
-      if (movie === null) {
-        throw new NotFoundApiError(notFoundDeleteMovie);
+      if (req.user._id !== movie.owner.toString()) {
+        return next(new ForbiddenError('Пользователи не могут удалять чужие Фильмы'));
       }
-      if (movie.owner.valueOf() !== req.user._id) {
-        throw new ForbiddenApiError(forbiddenDeleteMovie);
+      return movie;
+    })
+    .then((movie) => Movie.deleteOne(movie))
+    .then((movie) => res.status(200).send(movie))
+    .catch((err) => {
+      if (err instanceof mongoose.Error.CastError) {
+        return next(new RequestError('Переданы некорректные данные фильма при запросе'));
       }
-      return Movie.findByIdAndRemove(req.params.movieId)
-        .then(() => res.status(200).send({ message: successDeleteMovie }))
-        .catch(next);
-    }).catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequestApiError(badRequestDeleteMovie));
-      } else {
-        next(err);
+      if (err instanceof mongoose.Error.DocumentNotFoundError) {
+        return next(new NotFoundError('Запрашиваемые данные фильма не найдены'));
       }
+      return next(err);
     });
 };
 
 module.exports = {
-  getSavedMovies,
-  createMovie,
-  deleteMovieById,
+  addMovie, getMovies, deleteMovie,
 };

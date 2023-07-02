@@ -1,63 +1,88 @@
-const User = require('../models/user');
-const BadRequestApiError = require('../errors/BadRequestApiError');
-const NotFoundApiError = require('../errors/NotFoundApiError');
-const ConflictApiError = require('../errors/ConflictApiError');
-const {
-  notFoundUser,
-  badRequestFindUser,
-  badRequestUpdateUser,
-  conflictUpdateUser,
-} = require('../utils/constants');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
-const getCurrentUser = (req, res, next) => {
-  User.findById(req.user._id)
-    .then((user) => {
-      if (user === null) {
-        throw new NotFoundApiError(notFoundUser);
+const User = require('../models/user');
+const { JWT_SECRET } = require('../config');
+
+const NotFoundError = require('../utils/errors/not-found-err');
+const ConflictError = require('../utils/errors/conflict-err');
+const RequestError = require('../utils/errors/request-err');
+
+const findUserById = (id, res, next) => {
+  User.findById(id)
+    .orFail()
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err instanceof mongoose.Error.DocumentNotFoundError) {
+        return next(new NotFoundError('Запрашиваемые данные пользователя не найдены'));
       }
-      res.status(200).send({
-        email: user.email,
-        name: user.name,
-      });
-    }).catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequestApiError(badRequestFindUser));
-      } else {
-        next(err);
+      if (err instanceof mongoose.Error.ValidationError) {
+        return next(new RequestError('Переданы некорректные данные пользователя при запросе'));
       }
+      return next(err);
     });
 };
 
-const updateProfile = (req, res, next) => {
-  User.findByIdAndUpdate(
-    req.user._id,
-    {
-      name: req.body.name,
-      email: req.body.email,
-    },
-    {
-      new: true,
-      runValidators: true,
-    },
-  ).then((user) => {
-    if (user === null) {
-      throw new NotFoundApiError(notFoundUser);
-    }
-    res.status(200).send(user);
-  }).catch((err) => {
-    if (err.name === 'CastError') {
-      next(new BadRequestApiError(badRequestFindUser));
-    }
-    if (err.name === 'ValidationError') {
-      next(new BadRequestApiError(badRequestUpdateUser));
-    }
-    if (err.code === 11000) {
-      next(new ConflictApiError(conflictUpdateUser));
-    } next(err);
-  });
+const getUserInfo = (req, res, next) => {
+  findUserById(req.user._id, res, next);
+};
+
+const createUser = (req, res, next) => {
+  const {
+    name, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => {
+      User.create({
+        name, email, password: hash,
+      })
+        .then((user) => res.status(201).send({
+          name: user.name,
+          email: user.email,
+        }))
+        .catch((err) => {
+          if (err instanceof mongoose.Error.ValidationError) {
+            return next(new RequestError('Переданы некорректные данные в форме создания пользователя'));
+          }
+          if (err.code === 11000) {
+            return next(new ConflictError('Введенный email занят'));
+          }
+          return next(err);
+        });
+    });
+};
+
+const changeUserInfo = (id, data, res, next) => {
+  User.findByIdAndUpdate(id, data, { new: true, runValidators: true })
+    .orFail()
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err instanceof mongoose.Error.DocumentNotFoundError) {
+        return next(new NotFoundError('Запрашиваемые данные пользователя не найдены'));
+      }
+      if (err instanceof mongoose.Error.ValidationError) {
+        return next(new RequestError('Переданы некорректные данные пользователя при запросе'));
+      }
+      return next(err);
+    });
+};
+
+const changeProfile = (req, res, next) => {
+  const { name, email } = req.body;
+  changeUserInfo(req.user._id, { name, email }, res, next);
+};
+
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, process.env.NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '3d' });
+      return res.send({ token });
+    })
+    .catch(next);
 };
 
 module.exports = {
-  getCurrentUser,
-  updateProfile,
+  createUser, changeProfile, login, getUserInfo,
 };
